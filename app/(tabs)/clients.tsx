@@ -12,11 +12,14 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useClientsSupabase } from '@/hooks/use-clients-supabase';
+import { useToast } from '@/hooks/use-toast';
+import { Toast } from '@/components/toast';
 
 export default function ClientsScreen() {
   const router = useRouter();
   const { clients, isLoading, createClient, isCreating, deleteClient, isDeleting } =
     useClientsSupabase();
+  const toast = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewClientForm, setShowNewClientForm] = useState(false);
@@ -37,7 +40,8 @@ export default function ClientsScreen() {
 
   const handleCreateClient = async () => {
     if (!formData.name.trim()) {
-      return Alert.alert('Erro', 'Digite o nome do cliente');
+      toast.error('Digite o nome do cliente');
+      return;
     }
 
     try {
@@ -59,9 +63,10 @@ export default function ClientsScreen() {
         notes: '',
       });
       setShowNewClientForm(false);
-      Alert.alert('Sucesso', 'Cliente criado com sucesso!');
+      toast.success('Cliente criado com sucesso!');
     } catch (err) {
-      Alert.alert('Erro', 'Erro ao criar cliente');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar cliente';
+      toast.error(errorMessage);
     }
   };
 
@@ -72,6 +77,7 @@ export default function ClientsScreen() {
         text: 'Deletar',
         onPress: () => {
           deleteClient(clientId);
+          toast.success('Cliente deletado com sucesso!');
         },
         style: 'destructive',
       },
@@ -239,6 +245,14 @@ export default function ClientsScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Toast */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onHide={toast.hide}
+      />
     </ScreenContainer>
   );
 }

@@ -3,11 +3,14 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { Toast } from '@/components/toast';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const toast = useToast();
 
   const handleLogout = async () => {
     Alert.alert('Fazer Logout', 'Tem certeza que deseja sair?', [
@@ -22,14 +25,19 @@ export default function ProfileScreen() {
           try {
             setIsLoggingOut(true);
             await logout();
+            toast.success('Logout realizado com sucesso!');
           } catch (error) {
-            Alert.alert('Erro', 'Erro ao fazer logout');
+            toast.error('Erro ao fazer logout');
             setIsLoggingOut(false);
           }
         },
         style: 'destructive',
       },
     ]);
+  };
+
+  const handleEditProfile = () => {
+    router.push('/edit-profile' as any);
   };
 
   if (isLoading) {
@@ -137,8 +145,11 @@ export default function ProfileScreen() {
           )}
 
           {/* Action Buttons */}
-          <View className="gap-3 mb-8">
-            <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
+          <View className="gap-3">
+            <TouchableOpacity
+              onPress={handleEditProfile}
+              className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between"
+            >
               <Text className="text-gray-800 font-semibold">Editar Perfil</Text>
               <Text className="text-lg">✏️</Text>
             </TouchableOpacity>
@@ -170,6 +181,14 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Toast */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onHide={toast.hide}
+      />
     </ScreenContainer>
   );
 }

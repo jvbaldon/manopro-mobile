@@ -243,7 +243,7 @@ export default function BudgetDetailScreen() {
                 <Text className="text-white font-bold">Deletar Orçamento</Text>
               )}
             </TouchableOpacity>
-          </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 

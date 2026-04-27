@@ -1,10 +1,9 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useAuthSupabase } from '@/hooks/use-auth-supabase';
-import { AuthState, User } from '@/lib/types';
+import { AuthState } from '@/lib/types';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { User, AuthState } from '@/lib/types';
@@ -12,43 +12,144 @@ export function useAuthSupabase() {
     isSignedIn: false,
   });
 
-  // Limpa vestígios do mock antigo e verifica sessão ao carregar
+  // Verificar sessão ao carregar
   useEffect(() => {
     const init = async () => {
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('authToken');
+      try {
+        // Limpar vestígios do mock antigo
+        await AsyncStorage.removeItem('user');
+        await AsyncStorage.removeItem('authToken');
 
-      const { data: { session } } = await supabase.auth.getSession();
-      setAuthState({
-        user: session?.user
-          ? { id: session.user.id, email: session.user.email || '' } as User
-          : null,
-        isLoading: false,
-        isSignedIn: !!session,
-      });
+        // Obter sessão atual
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Buscar dados completos do usuário
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          setAuthState({
+            user: {
+              id: session.user.id,
+              email: session.user.email || '',
+              ...userData,
+            } as User,
+            isLoading: false,
+            isSignedIn: true,
+          });
+        } else {
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isSignedIn: false,
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao inicializar auth:', err);
+        setAuthState({
+          user: null,
+          isLoading: false,
+          isSignedIn: false,
+        });
+      }
     };
 
     init();
+
+    // Listener para mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          // Buscar dados completos do usuário
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          setAuthState({
+            user: {
+              id: session.user.id,
+              email: session.user.email || '',
+              ...userData,
+            } as User,
+            isLoading: false,
+            isSignedIn: true,
+          });
+        } else {
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isSignedIn: false,
+          });
+        }
+      }
+    );
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setAuthState((prev) => ({ ...prev, isLoading: true }));
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    router.replace('/');
-  };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-  const register = async (email: string, password: string) => {
+      if (error) throw error;
+
+      if (data.session?.user) {
+        // Buscar dados completos do usuário
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
+
+        setAuthState({
+          user: {
+            id: data.session.user.id,
+            email: data.session.user.email || '',
+            ...userData,
+          } as User,
+          isLoading: false,
+          isSignedIn: true,
+        });
+
+        // Navegar para home
+        router.replace('/(tabs)' as any);
+      }
+    } catch (err) {
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      throw err;
+    }
+  }, [router]);
+
+  const logout = useCallback(async () => {
     setAuthState((prev) => ({ ...prev, isLoading: true }));
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    router.replace('/');
-  };
+    try {
+      await supabase.auth.signOut();
+      setAuthState({
+        user: null,
+        isLoading: false,
+        isSignedIn: false,
+      });
+      router.replace('/(auth)/login' as any);
+    } catch (err) {
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      throw err;
+    }
+  }, [router]);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    router.replace('/(auth)/login' as any);
+  return {
+    ...authState,
+    login,
+    logout,
   };
-
-  return { ...authState, login, register, logout };
 }

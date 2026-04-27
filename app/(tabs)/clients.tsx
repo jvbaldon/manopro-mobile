@@ -14,6 +14,8 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useClientsSupabase } from '@/hooks/use-clients-supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Toast } from '@/components/toast';
+import { usePagination } from '@/hooks/use-pagination';
+import { Pagination } from '@/components/pagination';
 
 export default function ClientsScreen() {
   const router = useRouter();
@@ -37,6 +39,8 @@ export default function ClientsScreen() {
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const pagination = usePagination(filteredClients, { itemsPerPage: 10 });
 
   const handleCreateClient = async () => {
     if (!formData.name.trim()) {
@@ -206,11 +210,12 @@ export default function ClientsScreen() {
           </Text>
 
           {filteredClients.length > 0 ? (
-            <FlatList
-              data={filteredClients}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              renderItem={({ item }) => (
+            <>
+              <FlatList
+                data={pagination.paginatedItems}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => router.push(`/client/${item.id}` as any)}
                   className="bg-white p-4 mb-3 rounded-xl border border-gray-100 shadow-sm active:opacity-70"
@@ -235,7 +240,15 @@ export default function ClientsScreen() {
                   </View>
                 </TouchableOpacity>
               )}
-            />
+              />
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={pagination.goToPage}
+                hasNextPage={pagination.hasNextPage}
+                hasPrevPage={pagination.hasPrevPage}
+              />
+            </>
           ) : (
             <View className="p-6 items-center">
               <Text className="text-gray-400">

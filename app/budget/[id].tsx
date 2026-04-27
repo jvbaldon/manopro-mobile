@@ -3,6 +3,11 @@ import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useBudgetsSupabase } from '@/hooks/use-budgets-supabase';
+import { useShare } from '@/hooks/use-share';
+import { usePdfGenerator } from '@/hooks/use-pdf-generator';
+import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { Toast } from '@/components/toast';
 import { cn } from '@/lib/utils';
 
 export default function BudgetDetailScreen() {
@@ -10,6 +15,10 @@ export default function BudgetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { budgets, isLoading, updateBudgetStatus, isUpdatingStatus, deleteBudget, isDeleting } =
     useBudgetsSupabase();
+  const { shareBudgetViaWhatsApp, shareBudgetViaEmail } = useShare();
+  const { generateBudgetPDF } = usePdfGenerator();
+  const { user } = useAuth();
+  const toast = useToast();
 
   const budget = budgets.find((b) => b.id === id);
   const [isEditing, setIsEditing] = useState(false);
@@ -180,17 +189,45 @@ export default function BudgetDetailScreen() {
 
           {/* Action Buttons */}
           <View className="gap-3">
-            <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
+            <TouchableOpacity
+              onPress={() => {
+                if (user?.full_name) {
+                  generateBudgetPDF(budget, user.full_name);
+                  toast.success('PDF gerado com sucesso!');
+                } else {
+                  toast.error('Erro ao gerar PDF');
+                }
+              }}
+              className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between"
+            >
               <Text className="text-gray-800 font-semibold">Gerar PDF</Text>
               <Text className="text-lg">📄</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
+            <TouchableOpacity
+              onPress={() => {
+                if (budget.client_id) {
+                  shareBudgetViaWhatsApp(budget, budget.client_id, budget.client_id);
+                } else {
+                  toast.error('Cliente não especificado');
+                }
+              }}
+              className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between"
+            >
               <Text className="text-gray-800 font-semibold">Enviar por WhatsApp</Text>
               <Text className="text-lg">📱</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
+            <TouchableOpacity
+              onPress={() => {
+                if (budget.client_id) {
+                  shareBudgetViaEmail(budget, budget.client_id, budget.client_id);
+                } else {
+                  toast.error('E-mail do cliente não disponível');
+                }
+              }}
+              className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between"
+            >
               <Text className="text-gray-800 font-semibold">Enviar por E-mail</Text>
               <Text className="text-lg">✉️</Text>
             </TouchableOpacity>
@@ -206,9 +243,17 @@ export default function BudgetDetailScreen() {
                 <Text className="text-white font-bold">Deletar Orçamento</Text>
               )}
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Toast */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onHide={toast.hide}
+      />
     </ScreenContainer>
   );
 }

@@ -84,6 +84,28 @@ function FinancialIcon({ focused }: { focused: boolean }) {
   );
 }
 
+function ClientsIcon({ focused }: { focused: boolean }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}>
+      <View style={{
+        width: 16, height: 12,
+        borderRadius: 2,
+        borderWidth: 2,
+        borderColor: focused ? '#2A9D76' : '#8C8A82',
+        backgroundColor: 'transparent',
+        marginBottom: 2,
+      }} />
+      <View style={{
+        width: 16, height: 12,
+        borderRadius: 2,
+        borderWidth: 2,
+        borderColor: focused ? '#2A9D76' : '#8C8A82',
+        backgroundColor: 'transparent',
+      }} />
+    </View>
+  );
+}
+
 function ProfileIcon({ focused }: { focused: boolean }) {
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}>
@@ -191,6 +213,13 @@ export default function TabsLayout() {
         options={{
           title: 'Financeiro',
           tabBarIcon: ({ focused }) => <FinancialIcon focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: 'Clientes',
+          tabBarIcon: ({ focused }) => <ClientsIcon focused={focused} />,
         }}
       />
       <Tabs.Screen

@@ -1,28 +1,31 @@
-import { ScrollView, Text, View, TouchableOpacity, FlatList } from 'react-native';
-import { useEffect } from 'react';
+import { ScrollView, Text, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
-import { useFinancial } from '@/hooks/use-financial';
+import { useFinancialSupabase } from '@/hooks/use-financial-supabase';
 
 export default function FinancialScreen() {
   const {
     transactions,
-    loadTransactions,
+    isLoading,
     getMonthSummary,
     getTotalRevenue,
     getTotalExpenses,
     getTotalProfit,
-  } = useFinancial();
+  } = useFinancialSupabase();
 
-  useEffect(() => {
-    loadTransactions();
-  }, []);
-
-  const monthSummary = getMonthSummary();
   const totalRevenue = getTotalRevenue();
   const totalExpenses = getTotalExpenses();
   const totalProfit = getTotalProfit();
-
   const recentTransactions = transactions.slice(0, 10);
+
+  if (isLoading) {
+    return (
+      <ScreenContainer className="p-0">
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#2A9D76" />
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer className="p-0">

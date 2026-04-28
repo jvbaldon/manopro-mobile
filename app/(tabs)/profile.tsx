@@ -6,6 +6,71 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Toast } from '@/components/toast';
 
+const COLORS = {
+  brand: '#2A9D76',
+  brandDark: '#1B7055',
+  brandLight: '#E8F4F0',
+  accent: '#F5820D',
+  accentLight: '#FFF3E8',
+  bg: '#F7F6F3',
+  white: '#FFFFFF',
+  border: '#E5E3DC',
+  text: '#2C2B27',
+  muted: '#8C8A82',
+  danger: '#DC2626',
+  dangerBg: '#FEF2F2',
+};
+
+const MenuItem = ({ emoji, label, onPress }: { emoji: string; label: string; onPress?: () => void }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.7}
+    style={{
+      backgroundColor: COLORS.white,
+      borderRadius: 12,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    }}
+  >
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: COLORS.brandLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+      }}>
+        <Text style={{ fontSize: 18 }}>{emoji}</Text>
+      </View>
+      <Text style={{ fontSize: 15, fontWeight: '500', color: COLORS.text }}>{label}</Text>
+    </View>
+    <Text style={{ fontSize: 16, color: COLORS.muted }}>›</Text>
+  </TouchableOpacity>
+);
+
+const InfoCard = ({ label, value }: { label: string; value: string }) => (
+  <View style={{
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 8,
+  }}>
+    <Text style={{ fontSize: 11, color: COLORS.muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+      {label}
+    </Text>
+    <Text style={{ fontSize: 15, fontWeight: '500', color: COLORS.text }}>{value}</Text>
+  </View>
+);
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
@@ -14,37 +79,29 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     Alert.alert('Fazer Logout', 'Tem certeza que deseja sair?', [
-      {
-        text: 'Cancelar',
-        onPress: () => {},
-        style: 'cancel',
-      },
+      { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Sair',
+        style: 'destructive',
         onPress: async () => {
           try {
             setIsLoggingOut(true);
             await logout();
             toast.success('Logout realizado com sucesso!');
-          } catch (error) {
+          } catch {
             toast.error('Erro ao fazer logout');
             setIsLoggingOut(false);
           }
         },
-        style: 'destructive',
       },
     ]);
-  };
-
-  const handleEditProfile = () => {
-    router.push('/edit-profile' as any);
   };
 
   if (isLoading) {
     return (
       <ScreenContainer className="p-0">
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2A9D76" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={COLORS.brand} />
         </View>
       </ScreenContainer>
     );
@@ -54,135 +111,182 @@ export default function ProfileScreen() {
     ?.split(' ')
     .map((n) => n[0])
     .join('')
-    .toUpperCase() || 'U';
+    .toUpperCase()
+    .slice(0, 2) || 'U';
+
+  const firstName = user?.full_name?.split(' ')[0] || 'Usuário';
 
   return (
-    <ScreenContainer className="p-0 bg-gray-50">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1">
-        {/* Header */}
-        <View className="bg-[#2A9D76] px-6 py-8">
-          <Text className="text-2xl font-bold text-white">Perfil</Text>
+    <ScreenContainer className="p-0">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: COLORS.bg }}
+      >
+        {/* Header verde com avatar sobreposto */}
+        <View style={{
+          backgroundColor: COLORS.brand,
+          paddingHorizontal: 24,
+          paddingTop: 20,
+          paddingBottom: 56,
+        }}>
+          <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 4, fontWeight: '500' }}>
+            PERFIL
+          </Text>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: COLORS.white }}>
+            Olá, {firstName}!
+          </Text>
+          <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>
+            Gerencie suas informações
+          </Text>
         </View>
 
-        {/* Profile Info */}
-        <View className="px-6 py-8">
-          {/* Avatar */}
-          <View className="items-center mb-6">
-            <View className="w-24 h-24 bg-white rounded-full border-4 border-[#2A9D76] items-center justify-center shadow-sm">
-              <Text className="text-5xl font-bold text-[#2A9D76]">{initials}</Text>
+        {/* Avatar card sobreposto */}
+        <View style={{ paddingHorizontal: 20, marginTop: -32, marginBottom: 24 }}>
+          <View style={{
+            backgroundColor: COLORS.white,
+            borderRadius: 16,
+            padding: 24,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 4,
+            alignItems: 'center',
+          }}>
+            {/* Avatar */}
+            <View style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: COLORS.brandLight,
+              borderWidth: 3,
+              borderColor: COLORS.brand,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: COLORS.brand }}>{initials}</Text>
             </View>
-          </View>
+            <Text style={{ fontSize: 18, fontWeight: '600', color: COLORS.text }}>
+              {user?.full_name || 'Usuário'}
+            </Text>
+            <Text style={{ fontSize: 13, color: COLORS.muted, marginTop: 4 }}>
+              {user?.email}
+            </Text>
 
-          {/* User Info */}
-          <View className="items-center mb-8">
-            <Text className="text-2xl font-bold text-gray-800">{user?.full_name || 'Usuário'}</Text>
-            <Text className="text-sm text-gray-500 mt-1">{user?.email}</Text>
-          </View>
-
-          {/* Info Cards */}
-          <View className="gap-3 mb-8">
-            {user?.phone_number && (
-              <View className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                <Text className="text-xs text-gray-500 mb-1">Telefone</Text>
-                <Text className="text-base font-semibold text-gray-800">{user.phone_number}</Text>
-              </View>
-            )}
-
-            {user?.cpf_cnpj && (
-              <View className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                <Text className="text-xs text-gray-500 mb-1">CPF/CNPJ</Text>
-                <Text className="text-base font-semibold text-gray-800">{user.cpf_cnpj}</Text>
-              </View>
-            )}
-
-            {user?.address && (
-              <View className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                <Text className="text-xs text-gray-500 mb-1">Endereço</Text>
-                <Text className="text-base font-semibold text-gray-800">{user.address}</Text>
-              </View>
-            )}
-
+            {/* Especialidades */}
             {user?.specialties && user.specialties.length > 0 && (
-              <View className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                <Text className="text-xs text-gray-500 mb-2">Especialidades</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {user.specialties.map((specialty, idx) => (
-                    <View key={idx} className="bg-[#2A9D76] bg-opacity-10 px-3 py-1 rounded-full">
-                      <Text className="text-xs font-semibold text-[#2A9D76]">{specialty}</Text>
-                    </View>
-                  ))}
-                </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12, justifyContent: 'center' }}>
+                {user.specialties.map((s, i) => (
+                  <View key={i} style={{
+                    backgroundColor: COLORS.brandLight,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                  }}>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: COLORS.brand }}>{s}</Text>
+                  </View>
+                ))}
               </View>
             )}
 
-            {user?.bio && (
-              <View className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                <Text className="text-xs text-gray-500 mb-1">Sobre</Text>
-                <Text className="text-sm text-gray-800">{user.bio}</Text>
-              </View>
-            )}
+            {/* Editar perfil */}
+            <TouchableOpacity
+              onPress={() => router.push('/edit-profile' as any)}
+              style={{
+                marginTop: 16,
+                backgroundColor: COLORS.brand,
+                paddingHorizontal: 28,
+                paddingVertical: 10,
+                borderRadius: 9999,
+              }}
+            >
+              <Text style={{ color: COLORS.white, fontWeight: '600', fontSize: 14 }}>✏️  Editar Perfil</Text>
+            </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Social Links */}
-          {(user?.google_my_business_link || user?.instagram_link) && (
-            <View className="mb-8">
-              <Text className="text-sm font-semibold text-gray-800 mb-3">Links</Text>
-              <View className="gap-2">
-                {user?.google_my_business_link && (
-                  <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
-                    <Text className="text-gray-800 font-semibold">Google Meu Negócio</Text>
-                    <Text className="text-lg">🔗</Text>
-                  </TouchableOpacity>
-                )}
-                {user?.instagram_link && (
-                  <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
-                    <Text className="text-gray-800 font-semibold">Instagram</Text>
-                    <Text className="text-lg">📱</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+        {/* Informações */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <Text style={{ fontSize: 11, color: COLORS.muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+            Informações
+          </Text>
+          {user?.phone_number && <InfoCard label="Telefone" value={user.phone_number} />}
+          {user?.cpf_cnpj && <InfoCard label="CPF / CNPJ" value={user.cpf_cnpj} />}
+          {user?.address && <InfoCard label="Endereço" value={user.address} />}
+          {user?.bio && <InfoCard label="Sobre" value={user.bio} />}
+          {!user?.phone_number && !user?.cpf_cnpj && !user?.address && (
+            <View style={{
+              backgroundColor: COLORS.white,
+              borderRadius: 12,
+              padding: 20,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: COLORS.border,
+            }}>
+              <Text style={{ fontSize: 14, color: COLORS.muted, textAlign: 'center' }}>
+                Complete seu perfil para aparecer nas buscas
+              </Text>
             </View>
           )}
+        </View>
 
-          {/* Action Buttons */}
-          <View className="gap-3">
-            <TouchableOpacity
-              onPress={handleEditProfile}
-              className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between"
-            >
-              <Text className="text-gray-800 font-semibold">Editar Perfil</Text>
-              <Text className="text-lg">✏️</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
-              <Text className="text-gray-800 font-semibold">Configurações</Text>
-              <Text className="text-lg">⚙️</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm flex-row items-center justify-between">
-              <Text className="text-gray-800 font-semibold">Suporte</Text>
-              <Text className="text-lg">💬</Text>
-            </TouchableOpacity>
+        {/* Links de negócio */}
+        {(user?.google_my_business_link || user?.instagram_link) && (
+          <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+            <Text style={{ fontSize: 11, color: COLORS.muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+              Links
+            </Text>
+            {user?.google_my_business_link && (
+              <MenuItem emoji="📍" label="Google Meu Negócio" />
+            )}
+            {user?.instagram_link && (
+              <MenuItem emoji="📸" label="Instagram" />
+            )}
           </View>
+        )}
 
-          {/* Logout Button */}
+        {/* Menu de ações */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <Text style={{ fontSize: 11, color: COLORS.muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+            Opções
+          </Text>
+          <MenuItem emoji="⚙️" label="Configurações" />
+          <MenuItem emoji="💬" label="Suporte" />
+        </View>
+
+        {/* Botão logout */}
+        <View style={{ paddingHorizontal: 20, paddingBottom: 48 }}>
           <TouchableOpacity
             onPress={handleLogout}
             disabled={isLoggingOut}
-            className={`rounded-lg py-4 items-center justify-center ${
-              isLoggingOut ? 'bg-gray-300' : 'bg-red-500'
-            }`}
+            style={{
+              backgroundColor: isLoggingOut ? COLORS.border : COLORS.dangerBg,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: isLoggingOut ? COLORS.border : '#FECACA',
+              padding: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
           >
             {isLoggingOut ? (
-              <ActivityIndicator size="small" color="white" />
+              <ActivityIndicator size="small" color={COLORS.danger} />
             ) : (
-              <Text className="text-white font-bold text-base">Fazer Logout</Text>
+              <>
+                <Text style={{ fontSize: 18 }}>🚪</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: COLORS.danger }}>
+                  Fazer Logout
+                </Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Toast */}
       <Toast
         message={toast.message}
         type={toast.type}

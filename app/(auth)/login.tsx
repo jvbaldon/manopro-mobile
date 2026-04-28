@@ -14,6 +14,19 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useAuth } from '@/lib/auth-context';
 
+const COLORS = {
+  brand: '#2A9D76',
+  brandDark: '#1B7055',
+  brandLight: '#E8F4F0',
+  accent: '#F5820D',
+  white: '#FFFFFF',
+  bg: '#F7F6F3',
+  border: '#E5E3DC',
+  text: '#2C2B27',
+  muted: '#8C8A82',
+  inputBg: '#FAF9F7',
+};
+
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
@@ -21,146 +34,242 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleLogin = async () => {
-    // Validações
-    if (!email.trim()) {
-      return Alert.alert('Erro', 'Digite seu e-mail');
-    }
-
-    if (!password) {
-      return Alert.alert('Erro', 'Digite sua senha');
-    }
-
-    // Validar formato de email
+    if (!email.trim()) return Alert.alert('Atenção', 'Digite seu e-mail');
+    if (!password) return Alert.alert('Atenção', 'Digite sua senha');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return Alert.alert('Erro', 'E-mail inválido');
-    }
-
+    if (!emailRegex.test(email)) return Alert.alert('Atenção', 'E-mail inválido');
     try {
       await login(email.trim(), password);
-      // Navegação é feita automaticamente pelo hook
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
-      Alert.alert('Erro de Login', errorMessage);
+      Alert.alert('Erro de Login', err instanceof Error ? err.message : 'Erro ao fazer login');
     }
   };
 
-  const handleRegisterPress = () => {
-    router.push('/(auth)/register' as any);
-  };
+  const inputStyle = (field: string) => ({
+    backgroundColor: COLORS.inputBg,
+    borderWidth: 1,
+    borderColor: focusedField === field ? COLORS.brand : COLORS.border,
+    borderRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: COLORS.text,
+    flex: 1,
+  });
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: COLORS.white }}
     >
-      <ScreenContainer className="p-0 bg-white">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1">
-          {/* Header com Logo */}
-          <View className="bg-[#2A9D76] px-6 py-12 items-center">
-            <View className="w-16 h-16 bg-white rounded-full items-center justify-center mb-4">
-              <Text className="text-3xl">🔧</Text>
-            </View>
-            <Text className="text-3xl font-bold text-white">ManoPro</Text>
-            <Text className="text-green-50 text-sm mt-2">Gestão de Serviços</Text>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: COLORS.white }}
+      >
+        {/* Cabeçalho verde */}
+        <View style={{
+          backgroundColor: COLORS.brand,
+          paddingHorizontal: 24,
+          paddingTop: 56,
+          paddingBottom: 40,
+          alignItems: 'center',
+        }}>
+          {/* Logo */}
+          <View style={{
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            backgroundColor: COLORS.white,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 14,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            elevation: 4,
+          }}>
+            <Text style={{ fontSize: 32 }}>🔧</Text>
+          </View>
+          <Text style={{ fontSize: 28, fontWeight: '700', color: COLORS.white, letterSpacing: -0.5 }}>
+            ManoPro
+          </Text>
+          <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>
+            Gestão de Serviços
+          </Text>
+        </View>
+
+        {/* Formulário */}
+        <View style={{
+          backgroundColor: COLORS.white,
+          marginHorizontal: 0,
+          paddingHorizontal: 24,
+          paddingTop: 32,
+          paddingBottom: 16,
+          flex: 1,
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: 6 }}>
+            Bem-vindo!
+          </Text>
+          <Text style={{ fontSize: 15, color: COLORS.muted, marginBottom: 28 }}>
+            Faça login para continuar
+          </Text>
+
+          {/* E-mail */}
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{
+              fontSize: 11, fontWeight: '600', color: COLORS.muted,
+              textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6,
+            }}>
+              E-MAIL
+            </Text>
+            <TextInput
+              placeholder="seu@email.com"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
+              editable={!isLoading}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholderTextColor={COLORS.muted}
+              style={inputStyle('email')}
+            />
           </View>
 
-          {/* Form */}
-          <View className="px-6 py-8 flex-1">
-            <Text className="text-2xl font-bold text-gray-800 mb-2">Bem-vindo!</Text>
-            <Text className="text-gray-500 mb-8">Faça login para continuar</Text>
-
-            {/* Email Input */}
-            <View className="mb-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">E-mail</Text>
+          {/* Senha */}
+          <View style={{ marginBottom: 8 }}>
+            <Text style={{
+              fontSize: 11, fontWeight: '600', color: COLORS.muted,
+              textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6,
+            }}>
+              SENHA
+            </Text>
+            <View style={{
+              backgroundColor: COLORS.inputBg,
+              borderWidth: 1,
+              borderColor: focusedField === 'password' ? COLORS.brand : COLORS.border,
+              borderRadius: 4,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 14,
+            }}>
               <TextInput
-                placeholder="seu@email.com"
-                value={email}
-                onChangeText={setEmail}
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
                 editable={!isLoading}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                className="border border-gray-300 rounded-lg px-4 py-3 bg-white text-gray-900"
+                secureTextEntry={!showPassword}
+                placeholderTextColor={COLORS.muted}
+                style={{ flex: 1, paddingVertical: 12, fontSize: 15, color: COLORS.text }}
               />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={{ fontSize: 18 }}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              </TouchableOpacity>
             </View>
-
-            {/* Password Input */}
-            <View className="mb-6">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">Senha</Text>
-              <View className="flex-row items-center border border-gray-300 rounded-lg bg-white px-4">
-                <TextInput
-                  placeholder="••••••••"
-                  value={password}
-                  onChangeText={setPassword}
-                  editable={!isLoading}
-                  secureTextEntry={!showPassword}
-                  className="flex-1 py-3 text-gray-900"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                >
-                  <Text className="text-gray-500 text-lg">
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Forgot Password Link */}
-            <TouchableOpacity className="mb-6">
-              <Text className="text-[#2A9D76] font-semibold text-sm">Esqueceu a senha?</Text>
-            </TouchableOpacity>
-
-            {/* Login Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={isLoading}
-              className={`rounded-lg py-4 items-center justify-center mb-4 ${
-                isLoading ? 'bg-gray-300' : 'bg-[#2A9D76]'
-              }`}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text className="text-white font-bold text-base">Entrar</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View className="flex-row items-center mb-6">
-              <View className="flex-1 h-px bg-gray-300" />
-              <Text className="text-gray-500 px-3 text-sm">ou</Text>
-              <View className="flex-1 h-px bg-gray-300" />
-            </View>
-
-            {/* Social Login Buttons */}
-            <TouchableOpacity
-              disabled={isLoading}
-              className="border border-gray-300 rounded-lg py-3 items-center justify-center mb-3"
-            >
-              <Text className="text-gray-700 font-semibold">Continuar com Google</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              disabled={isLoading}
-              className="border border-gray-300 rounded-lg py-3 items-center justify-center mb-6"
-            >
-              <Text className="text-gray-700 font-semibold">Continuar com Apple</Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Register Link */}
-          <View className="px-6 py-6 flex-row justify-center border-t border-gray-100">
-            <Text className="text-gray-600">Não tem conta? </Text>
-            <TouchableOpacity onPress={handleRegisterPress} disabled={isLoading}>
-              <Text className="text-[#2A9D76] font-bold">Criar conta</Text>
-            </TouchableOpacity>
+          {/* Esqueceu senha */}
+          <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 28 }}>
+            <Text style={{ fontSize: 13, color: COLORS.brand, fontWeight: '600' }}>
+              Esqueceu a senha?
+            </Text>
+          </TouchableOpacity>
+
+          {/* Botão entrar */}
+          <TouchableOpacity
+            onPress={handleLogin}
+            disabled={isLoading}
+            style={{
+              backgroundColor: isLoading ? COLORS.border : COLORS.brand,
+              borderRadius: 9999,
+              paddingVertical: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+              shadowColor: COLORS.brand,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isLoading ? 0 : 0.3,
+              shadowRadius: 8,
+              elevation: isLoading ? 0 : 4,
+            }}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color={COLORS.white} />
+            ) : (
+              <Text style={{ color: COLORS.white, fontWeight: '700', fontSize: 16 }}>Entrar</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Divisor */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
+            <Text style={{ color: COLORS.muted, paddingHorizontal: 12, fontSize: 13 }}>ou</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
           </View>
-        </ScrollView>
-      </ScreenContainer>
+
+          {/* Social */}
+          <TouchableOpacity
+            disabled={isLoading}
+            style={{
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              borderRadius: 4,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 10,
+              backgroundColor: COLORS.white,
+            }}
+          >
+            <Text style={{ color: COLORS.text, fontWeight: '600', fontSize: 14 }}>Continuar com Google</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            disabled={isLoading}
+            style={{
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              borderRadius: 4,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: COLORS.white,
+            }}
+          >
+            <Text style={{ color: COLORS.text, fontWeight: '600', fontSize: 14 }}>Continuar com Apple</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Rodapé */}
+        <View style={{
+          paddingVertical: 24,
+          paddingHorizontal: 24,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border,
+          backgroundColor: COLORS.white,
+        }}>
+          <Text style={{ fontSize: 14, color: COLORS.muted }}>Não tem conta? </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/register' as any)}
+            disabled={isLoading}
+          >
+            <Text style={{ fontSize: 14, color: COLORS.brand, fontWeight: '700' }}>Criar conta</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

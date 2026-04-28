@@ -17,7 +17,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register, isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,7 +28,6 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
-    // Validações
     if (!fullName.trim()) {
       return Alert.alert('Erro', 'Digite seu nome completo');
     }
@@ -49,7 +48,6 @@ export default function RegisterScreen() {
       return Alert.alert('Erro', 'As senhas não coincidem');
     }
 
-    // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return Alert.alert('Erro', 'E-mail inválido');
@@ -79,17 +77,18 @@ export default function RegisterScreen() {
       ]);
 
       if (profileError) {
-        // Se falhar ao criar o perfil, deletar o usuário de auth
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw profileError;
+        // Não conseguimos deletar o auth user pelo cliente — apenas informamos o usuário
+        // O perfil poderá ser criado depois via trigger ou reaproveitado no próximo login
+        console.warn('Erro ao criar perfil:', profileError.message);
+        throw new Error('Conta criada, mas houve um erro ao salvar o perfil. Tente fazer login.');
       }
 
       Alert.alert(
-        'Sucesso',
-        'Conta criada com sucesso! Faça login para continuar.',
+        'Conta Criada!',
+        'Sua conta foi criada com sucesso. Faça login para continuar.',
         [
           {
-            text: 'OK',
+            text: 'Fazer Login',
             onPress: () => router.replace('/(auth)/login' as any),
           },
         ]

@@ -1,24 +1,30 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'SUA_URL_AQUI';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'SUA_CHAVE_AQUI';
 
-// Durante o SSR do Expo Web, o código roda no Node.js onde nem window
-// nem localStorage existem. O typeof guard evita o crash nessa fase.
-// No browser (cliente) e no mobile, funciona normalmente.
+// NÃO usamos Platform.OS aqui pois ele importa módulos nativos (PlatformConstants)
+// que causam crash no New Architecture (newArchEnabled: true) durante a inicialização.
+//
+// Lógica de detecção de ambiente sem dependências nativas:
+// - iOS/Android: window e document não existem → usa AsyncStorage
+// - Browser web real: window, document e localStorage existem → usa localStorage
+// - SSR do Expo Web (Node.js): window existe mas localStorage não → usa AsyncStorage
+const isWebBrowser =
+  typeof window !== 'undefined' &&
+  typeof document !== 'undefined' &&
+  typeof localStorage !== 'undefined';
+
 const webStorage = {
-  getItem: (key: string) =>
-    Promise.resolve(typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null),
+  getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
   setItem: (key: string, value: string) =>
-    Promise.resolve(typeof localStorage !== 'undefined' ? localStorage.setItem(key, value) : undefined),
-  removeItem: (key: string) =>
-    Promise.resolve(typeof localStorage !== 'undefined' ? localStorage.removeItem(key) : undefined),
+    Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
 };
 
-const storage = Platform.OS === 'web' ? webStorage : AsyncStorage;
+const storage = isWebBrowser ? webStorage : AsyncStorage;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
